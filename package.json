@@ -16,15 +16,16 @@
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder --linux"
+    "dist": "electron-builder --win --ia32"
   },
   "devDependencies": {
+    "devtron": "^1.4.0",
     "electron-builder": "^20.14.7"
   },
   "build": {
     "appId": "app.updater",
-    "linux": {
-      "target": "tar.gz"
+    "win": {
+      "target": "portable"
     }
   }
 }
