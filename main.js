@@ -133,56 +133,62 @@ function downloadFromGitPath(gitAll, repo, objt, cb) {
     }
 
     customHeaderRequest.get('https://gitlab.com/api/v4/projects/' + projectID + '/repository/branches/master', function(error, response, body) {
-        let bodi = JSON.parse(response['body'])
-        let id = bodi.commit.id
+        if (!error && response.statusCode == 200) {
+            let bodi = JSON.parse(response['body'])
+            let id = bodi.commit.id
         
-        customHeaderRequest.get('https://gitlab.com/api/v4/projects/' + projectID + '/repository/tree?recursive=1&page=' + repo + '&per_page=100', function(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                if (body == '[]') {
-                    gitFilesObject = JSON.parse(gitAll)
-				    let numberOfCards = gitFilesObject.length
-				    let index = 0
-                    for (index = 0; index < numberOfCards; index++) {
-                        if (gitFilesObject[index]['type'] !== 'blob') {
-                            continue
-                        }
-                        let folderName = path.dirname(gitFilesObject[index]['path'])
-                        let fileName = path.posix.basename(gitFilesObject[index]['path'])
-                        let key = folderName + '/' + fileName
-                        fs.ensureDir(path.join(whereToFolder, folderName))
-                        if (typeof filesObject[key] === 'undefined') {
-                            filesObject[key] = { 'name': key, 'id': gitFilesObject[index]['id'], 'download_url': makeDownloadPath(folderName, fileName), 'downloaded': 0, savePath: path.join(whereToFolder, key), modified: 1, exists: 1 }
-                        } else {
-                            filesObject[key]['exists'] = 1
-                            if (filesObject[key]['id'] !== gitFilesObject[index]['id']) {
-                                filesObject[key]['downloaded'] = 0
-                                filesObject[key]['id'] = gitFilesObject[index]['id']
-                                filesObject[key]['modified'] = 1
+            customHeaderRequest.get('https://gitlab.com/api/v4/projects/' + projectID + '/repository/tree?recursive=1&page=' + repo + '&per_page=100', function(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    if (body == '[]') {
+                        gitFilesObject = JSON.parse(gitAll)
+				        let numberOfCards = gitFilesObject.length
+				        let index = 0
+                        for (index = 0; index < numberOfCards; index++) {
+                            if (gitFilesObject[index]['type'] !== 'blob') {
+                                continue
+                            }
+                            let folderName = path.dirname(gitFilesObject[index]['path'])
+                            let fileName = path.posix.basename(gitFilesObject[index]['path'])
+                            let key = folderName + '/' + fileName
+                            fs.ensureDir(path.join(whereToFolder, folderName))
+                            if (typeof filesObject[key] === 'undefined') {
+                                filesObject[key] = { 'name': key, 'id': gitFilesObject[index]['id'], 'download_url': makeDownloadPath(folderName, fileName), 'downloaded': 0, savePath: path.join(whereToFolder, key), modified: 1, exists: 1 }
                             } else {
-                                if (!fs.existsSync(filesObject[key]['savePath'])) {
-                                    if (!fs.existsSync(path.join(whereToFolder, key))) {
-                                        filesObject[key]['downloaded'] = 0
-                                        filesObject[key]['modified'] = 1
-                                    } else {
-                                        filesObject[key]['savePath'] = path.join(whereToFolder, key)
+                                filesObject[key]['exists'] = 1
+                                if (filesObject[key]['id'] !== gitFilesObject[index]['id']) {
+                                    filesObject[key]['downloaded'] = 0
+                                    filesObject[key]['id'] = gitFilesObject[index]['id']
+                                    filesObject[key]['modified'] = 1
+                                } else {
+                                    if (!fs.existsSync(filesObject[key]['savePath'])) {
+                                        if (!fs.existsSync(path.join(whereToFolder, key))) {
+                                            filesObject[key]['downloaded'] = 0
+                                            filesObject[key]['modified'] = 1
+                                        } else {
+                                            filesObject[key]['savePath'] = path.join(whereToFolder, key)
+                                        }
                                     }
                                 }
                             }
                         }
+                        finishedUpdatingCardObject(cb)
+                    } else if (repo === 1) {
+                        downloadFromGitPath(body, repo + 1, objt, cb) 
+                    } else {
+                        gitAll = gitAll.slice(0, -1) + ',' + body.slice(1)
+                        downloadFromGitPath(gitAll, repo + 1, objt, cb)
                     }
-                    finishedUpdatingCardObject(cb)
-                } else if (repo === 1) {
-                    downloadFromGitPath(body, repo + 1, objt, cb) 
                 } else {
-                    gitAll = gitAll.slice(0, -1) + ',' + body.slice(1)
-                    downloadFromGitPath(gitAll, repo + 1, objt, cb)
+                    console.log(error)
+                    console.log(response.statusCode)
+                    process.exit()
                 }
-            } else {
-                console.log(error)
-                console.log(response.statusCode)
-                process.exit()
-            }
-        })
+            })
+        } else {
+            console.log(error)
+            console.log(response.statusCode)
+            process.exit()
+        }
     })
 }
 
