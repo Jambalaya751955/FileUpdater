@@ -7,3 +7,4 @@ renderer.js	cf3ccff92f644bc5aa7a98ab209613ee
 yarn.lock	c4dd1005d53664d87b26e3d426366bfd
 update/update-push.bat	49e0e022872a85c5350b8ee445ecd4d8
 update/update-without-sound.bat	22d7b973d79ef9311213aeff61d93d7c
+update/version.txt	a1cbaf4506d507f382cf9c71442752ad
